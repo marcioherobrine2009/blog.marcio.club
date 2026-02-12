@@ -1,0 +1,196 @@
+body {
+  background-color: black;
+  color: white;
+  font-family: monospace;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  margin: 0;
+  padding: 28px 20px;
+  box-sizing: border-box;
+}
+
+@font-face {
+  font-family: "MarcioArabic";
+  src: url("/assets/font.tff") format("truetype");
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(760px, 100%);
+  justify-content: center;
+  gap: 24px;
+}
+
+.left {
+  text-align: center;
+  width: 100%;
+}
+
+.left img {
+  image-rendering: pixelated;
+  width: 180px;
+  height: auto;
+  display: block;
+  margin: 0 auto 16px auto;
+}
+
+.left .name {
+  font-size: 50px;
+  margin-bottom: 10px;
+  font-family: "MarcioArabic", serif;
+}
+
+.divider {
+  width: 100%;
+  height: 2px;
+  background-color: white;
+}
+
+#right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+#right h2 {
+  font-size: 24px;
+  margin: 0 0 6px 0;
+  font-family: monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.member {
+  padding: 2px 0;
+}
+
+.writeup .info {
+  text-align: left;
+}
+
+.info {
+  font-size: 18px;
+  line-height: 1.55;
+}
+
+.info a {
+  display: block;
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  letter-spacing: 0.3px;
+}
+
+.info h3 {
+  font-size: 20px;
+  margin: 18px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.info p {
+  margin: 0 0 10px;
+}
+
+.info ul,
+.info ol {
+  margin: 0 0 12px 20px;
+  padding: 0;
+}
+
+.info li {
+  margin: 0 0 6px;
+}
+
+.info code {
+  background: #121212;
+  border: 1px solid #2b2b2b;
+  padding: 1px 6px;
+}
+
+.info pre {
+  margin: 8px 0 12px;
+  background: #0c0c0c;
+  border: 1px solid #2f2f2f;
+  border-left: 3px solid #fff;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+.info pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.member:hover .info a,
+.info a:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+
+  .container {
+    text-align: center;
+    gap: 20px;
+  }
+
+  .left {
+    margin-bottom: 2px;
+  }
+
+  .left .name {
+    font-size: 40px;
+  }
+
+  .left img {
+    width: 150px;
+  }
+
+  .divider {
+    margin: 10px 0 8px 0;
+  }
+
+  #right {
+    gap: 12px;
+  }
+
+  .member {
+    text-align: center;
+    padding: 2px 0;
+  }
+
+  .info {
+    font-size: 16px;
+  }
+
+}
+
+@media (max-width: 480px) {
+  .left .name {
+    font-size: 32px;
+  }
+
+  .left img {
+    width: 120px;
+  }
+
+  #right {
+    gap: 15px;
+  }
+
+  #right h2 {
+    font-size: 18px;
+  }
+}

